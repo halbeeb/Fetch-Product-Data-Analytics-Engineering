@@ -19,5 +19,58 @@ CREATE OR REPLACE FILE FORMAT Products.fetch.json_format
     STRIP_NULL_VALUES = TRUE
     IGNORE_UTF8_ERRORS = TRUE;
 
+-- Create Stages for Uploaded Files
+CREATE OR REPLACE STAGE Products.fetch.brands_stage
+    URL = 's3://fetch-hiring.s3.amazonaws.com/analytics-engineer/ineeddata-data-modeling/brands.json.gz'
+    FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
+CREATE OR REPLACE STAGE Products.fetch.users_stage
+    URL = 's3://fetch-hiring.s3.amazonaws.com/analytics-engineer/ineeddata-data-modeling/users.json.gz'
+    FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+CREATE OR REPLACE STAGE Products.fetch.receipts_stage
+    URL = 's3://fetch-hiring.s3.amazonaws.com/analytics-engineer/ineeddata-data-modeling/receipts.json.gz'
+    FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+-- Create tables for our data
+-- Receipts Table
+CREATE TABLE IF NOT EXISTS Products.fetch.receipts (
+    _id VARCHAR,
+    bonusPointsEarned FLOAT,
+    bonusPointsEarnedReason VARCHAR,
+    createDate TIMESTAMP_LTZ,
+    dateScanned TIMESTAMP_LTZ,
+    finishedDate TIMESTAMP_LTZ,
+    modifyDate TIMESTAMP_LTZ,
+    pointsAwardedDate TIMESTAMP_LTZ,
+    pointsEarned FLOAT,
+    purchaseDate TIMESTAMP_LTZ,
+    purchasedItemCount INT,
+    rewardsReceiptItemList VARIANT,
+    rewardsReceiptStatus VARCHAR,
+    totalSpent FLOAT,
+    userId VARCHAR
+);
+
+-- Users Table
+CREATE TABLE IF NOT EXISTS Products.fetch.users (
+    _id VARCHAR,
+    state VARCHAR,
+    createdDate TIMESTAMP_LTZ,
+    lastLogin TIMESTAMP_LTZ,
+    role VARCHAR,
+    active BOOLEAN
+);
+
+-- Brand Table
+CREATE TABLE IF NOT EXISTS Products.fetch.brands (
+    _id VARCHAR,
+    barcode VARCHAR,
+    brandCode VARCHAR,
+    category VARCHAR,
+    categoryCode VARCHAR,
+    cpg VARIANT,
+    topBrand BOOLEAN,
+    name VARCHAR
+);
 
