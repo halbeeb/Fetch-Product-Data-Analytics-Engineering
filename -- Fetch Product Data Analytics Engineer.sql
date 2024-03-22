@@ -15,22 +15,40 @@ CREATE SCHEMA IF NOT EXISTS Products.fetch;
 -- Create File Format for JSON files
 CREATE OR REPLACE FILE FORMAT Products.fetch.json_format
     TYPE = 'JSON'
+    COMPRESSION = 'GZIP'
     STRIP_OUTER_ARRAY = TRUE
     STRIP_NULL_VALUES = TRUE
     IGNORE_UTF8_ERRORS = TRUE;
 
+CREATE STORAGE INTEGRATION s3_integration
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = S3
+  ENABLED = TRUE
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::MY79002.eu-west-2.aws:role/Habeeb'
+  STORAGE_ALLOWED_LOCATIONS = ('s3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/');
+
+CREATE OR REPLACE STAGE Products.fetch.receipts_stage
+    URL = 's3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/brands.json.gz'
+    STORAGE_INTEGRATION = s3_integration
+    FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+
+LIST @Products.fetch.receipts_stage;
+
 -- Create Stages for Uploaded Files
 CREATE OR REPLACE STAGE Products.fetch.brands_stage
-    URL = 's3://fetch-hiring.s3.amazonaws.com/analytics-engineer/ineeddata-data-modeling/brands.json.gz'
+    URL = 's3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/brands.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
 CREATE OR REPLACE STAGE Products.fetch.users_stage
-    URL = 's3://fetch-hiring.s3.amazonaws.com/analytics-engineer/ineeddata-data-modeling/users.json.gz'
+    URL = 's3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/users.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
 CREATE OR REPLACE STAGE Products.fetch.receipts_stage
-    URL = 's3://fetch-hiring.s3.amazonaws.com/analytics-engineer/ineeddata-data-modeling/receipts.json.gz'
+    URL = 's3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/receipts.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+describe Products.fetch.brands_stage;
 
 -- Create tables for our data
 -- Receipts Table
@@ -73,4 +91,65 @@ CREATE TABLE IF NOT EXISTS Products.fetch.brands (
     topBrand BOOLEAN,
     name VARCHAR
 );
+
+-- Copy Data into Tables
+COPY INTO Products.fetch.brands
+FROM @Products.fetch.brands_stage
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+COPY INTO Products.fetch.users
+FROM @Products.fetch.users_stage
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+COPY INTO Products.fetch.receipts
+FROM @Products.fetch.receipts_stage
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+
+-- -- Copy Data into Tables
+COPY INTO Products.fetch.brands
+FROM @Products.fetch.brands_stage
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format)
+MATCH_BY_COLUMN_NAME=CASE_SENSITIVE;
+
+COPY INTO Products.fetch.users
+FROM @Products.fetch.users_stage
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format)
+MATCH_BY_COLUMN_NAME=CASE_SENSITIVE;
+
+COPY INTO Products.fetch.receipts
+FROM @Products.fetch.receipts_stage
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format)
+MATCH_BY_COLUMN_NAME=CASE_SENSITIVE;
+
+
+-- Testing the
+
+CREATE OR REPLACE FILE FORMAT Products.fetch.json_format
+    TYPE = 'JSON'
+    COMPRESSION = 'GZIP'
+    STRIP_OUTER_ARRAY = TRUE
+    STRIP_NULL_VALUES = TRUE
+    IGNORE_UTF8_ERRORS = TRUE;
+
+
+CREATE OR REPLACE STAGE Products.fetch.receipts_stage
+    URL = 's3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/'
+    FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+
+
+Create or replace test_table (JSON Variant);
+
+
+
+CREATE OR REPLACE STAGE Products.fetch.receipts_stage
+    URL = 's3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/receipts.json.gz'
+    FILE_FORMAT = (type=json, compression=GZIP);
+
+Failure using stage area. Cause: [Access Denied (Status Code: 403; Error Code: AccessDenied)]
+
+
+--Testing communication with IAM AWS instance
+SELECT SYSTEM$GET_AWS_S3_PRE_SIGNED_URL('s3://snowflake-docs/warehouse-provisioning.png'); 
 
