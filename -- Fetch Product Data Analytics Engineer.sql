@@ -5,28 +5,31 @@ CREATE WAREHOUSE IF NOT EXISTS Fetch_Rewards
     AUTO_RESUME = TRUE
     INITIALLY_SUSPENDED = TRUE;
 
+--Create the database name Products
 CREATE DATABASE IF NOT EXISTS Products;
 
+--Create the Schema name Fetch
 CREATE SCHEMA IF NOT EXISTS Products.fetch;
 
 -- Create a single file format for JSON files, assuming all files are GZIP compressed and in JSON format
 CREATE OR REPLACE FILE FORMAT Products.fetch.json_format
     TYPE = 'JSON'
+    COMPRESSION = 'GZIP'
     STRIP_OUTER_ARRAY = TRUE
     STRIP_NULL_VALUES = TRUE
     IGNORE_UTF8_ERRORS = TRUE;
 
 -- Create stages for uploaded files
 CREATE OR REPLACE STAGE Products.fetch.brands_stage
-    URL = 's3://habeebanalytics/brands.json'
+    URL = 's3://habeebanalytics/brands.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
 CREATE OR REPLACE STAGE Products.fetch.users_stage
-    URL = 's3://habeebanalytics/users.json'
+    URL = 's3://habeebanalytics/users.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
 CREATE OR REPLACE STAGE Products.fetch.receipts_stage
-    URL = 's3://habeebanalytics/receipts.json'
+    URL = 's3://habeebanalytics/receipts.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
 Select * from @products.fetch.receipts_stage (file_format=> 'Products.fetch.json_format');
@@ -71,26 +74,6 @@ CREATE TABLE IF NOT EXISTS Products.fetch.brands (
 );
 
 -- Copy data into tables with match by column name case sensitive, error handling as required
-COPY INTO Products.fetch.brands
-FROM @Products.fetch.brands_stage
-FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format)
-MATCH_BY_COLUMN_NAME=CASE_SENSITIVE
-ON_ERROR = 'CONTINUE';
-
-COPY INTO Products.fetch.users
-FROM @Products.fetch.users_stage
-FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format)
-MATCH_BY_COLUMN_NAME=CASE_SENSITIVE
-ON_ERROR = 'CONTINUE';
-
-COPY INTO Products.fetch.receipts
-FROM @Products.fetch.receipts_stage
-FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format)
-MATCH_BY_COLUMN_NAME=CASE_SENSITIVE
-ON_ERROR = 'CONTINUE';
-
-
---Testing new code
 -- Populate the receipts with the data from the stage receipts
 COPY INTO Products.fetch.receipts (
     _id,
@@ -131,12 +114,61 @@ FROM (
 FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
 
+--Copy into Users table from the user stage
+COPY INTO Products.fetch.users (
+    _id,
+    active,
+    createdDate,
+    lastLogin,
+    role,
+    state
+)
+FROM (
+    SELECT 
+        $1:_id:"$oid"::VARCHAR AS _id,
+        $1:active::BOOLEAN AS active,
+        TO_TIMESTAMP_NTZ($1:createdDate:"$date"::NUMBER / 1000) AS createdDate,
+        TO_TIMESTAMP_NTZ($1:lastLogin:"$date"::NUMBER / 1000) AS lastLogin,
+        $1:role::VARCHAR AS role,
+        $1:state::VARCHAR AS state
+    FROM @Products.fetch.users_stage
+)
+ON_ERROR = 'CONTINUE'
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+
+-- Copy into brands tables from brands stage
+COPY INTO Products.fetch.brands (
+    _id,
+    barcode,
+    brandCode,
+    category,
+    categoryCode,
+    cpg,
+    topBrand,
+    name
+)
+FROM (
+    SELECT 
+        $1:_id:"$oid"::VARCHAR AS _id,
+        $1:barcode::VARCHAR AS barcode,
+        $1:brandCode::VARCHAR AS brandCode,
+        $1:category::VARCHAR AS category,
+        $1:categoryCode::VARCHAR AS categoryCode,
+        OBJECT_CONSTRUCT('id', $1:cpg:"$id":"$oid"::STRING, 'ref', $1:cpg:"$ref"::STRING) AS cpg,
+        $1:topBrand::BOOLEAN AS topBrand,
+        $1:name::VARCHAR AS name
+    FROM @Products.fetch.brands_stage
+)
+ON_ERROR = 'CONTINUE'
+FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
+-- Testing the receipts, brands, and users table
 select *
 from Products.fetch.receipts;
 
-
 select *
-from Products.fetch.receipts;
+from Products.fetch.brands;
 
 select *
 from Products.fetch.users;
