@@ -24,7 +24,7 @@ CREATE STORAGE INTEGRATION s3_integration
   TYPE = EXTERNAL_STAGE
   STORAGE_PROVIDER = S3
   ENABLED = TRUE
-  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::MY79002.eu-west-2.aws:role/Habeeb'
+  STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::123456789012:role/Habeeb'
   STORAGE_ALLOWED_LOCATIONS = ('s3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/');
 
 CREATE OR REPLACE STAGE Products.fetch.receipts_stage
@@ -32,8 +32,10 @@ CREATE OR REPLACE STAGE Products.fetch.receipts_stage
     STORAGE_INTEGRATION = s3_integration
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
-
 LIST @Products.fetch.receipts_stage;
+
+
+
 
 -- Create Stages for Uploaded Files
 CREATE OR REPLACE STAGE Products.fetch.brands_stage
@@ -152,4 +154,43 @@ Failure using stage area. Cause: [Access Denied (Status Code: 403; Error Code: A
 
 --Testing communication with IAM AWS instance
 SELECT SYSTEM$GET_AWS_S3_PRE_SIGNED_URL('s3://snowflake-docs/warehouse-provisioning.png'); 
+
+
+
+CREATE OR REPLACE FILE FORMAT my_json_format
+    TYPE = 'JSON'
+    COMPRESSION = 'GZIP'
+    STRIP_OUTER_ARRAY = FALSE
+    STRIP_NULL_VALUES = TRUE
+    IGNORE_UTF8_ERRORS = TRUE;
+
+
+CREATE OR REPLACE STAGE my_stage
+    URL = 's3://fetch-hiring/analytics-engineer/ineeddata-data-modeling/brands.json.gz'
+    FILE_FORMAT = (FORMAT_NAME = my_json_format);
+
+CREATE OR REPLACE TABLE receipts (
+    _id VARCHAR,
+    bonusPointsEarned NUMBER,
+    bonusPointsEarnedReason STRING,
+    createDate TIMESTAMP,
+    dateScanned TIMESTAMP,
+    finishedDate TIMESTAMP,
+    modifyDate TIMESTAMP,
+    pointsAwardedDate TIMESTAMP,
+    pointsEarned NUMBER,
+    purchaseDate TIMESTAMP,
+    purchasedItemCount NUMBER,
+    rewardsReceiptItemList VARIANT,
+    rewardsReceiptStatus STRING,
+    totalSpent NUMBER,
+    userId STRING
+);
+
+COPY INTO receipts
+FROM @my_stage/receipts.json.gz
+FILE_FORMAT = (FORMAT_NAME = my_json_format)
+MATCH_BY_COLUMN_NAME=CASE_SENSITIVE
+ON_ERROR = 'CONTINUE';
+
 
