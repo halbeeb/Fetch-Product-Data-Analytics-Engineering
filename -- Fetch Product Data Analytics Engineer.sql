@@ -8,6 +8,7 @@ CREATE WAREHOUSE IF NOT EXISTS Fetch_Rewards
 --Create the database name Products
 CREATE DATABASE IF NOT EXISTS Products;
 
+
 --Create the Schema name Fetch
 CREATE SCHEMA IF NOT EXISTS Products.fetch;
 
@@ -20,6 +21,10 @@ CREATE OR REPLACE FILE FORMAT Products.fetch.json_format
     IGNORE_UTF8_ERRORS = TRUE;
 
 -- Create stages for uploaded files
+CREATE OR REPLACE STAGE Products.fetch.receipts_stage
+    URL = 's3://habeebanalytics/receipts.json.gz'
+    FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
+
 CREATE OR REPLACE STAGE Products.fetch.brands_stage
     URL = 's3://habeebanalytics/brands.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
@@ -27,12 +32,6 @@ CREATE OR REPLACE STAGE Products.fetch.brands_stage
 CREATE OR REPLACE STAGE Products.fetch.users_stage
     URL = 's3://habeebanalytics/users.json.gz'
     FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
-
-CREATE OR REPLACE STAGE Products.fetch.receipts_stage
-    URL = 's3://habeebanalytics/receipts.json.gz'
-    FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
-
-Select * from @products.fetch.receipts_stage (file_format=> 'Products.fetch.json_format');
 
 -- Create tables for our data: Receipts, Users, Brands
 CREATE TABLE IF NOT EXISTS Products.fetch.receipts (
@@ -113,7 +112,6 @@ FROM (
 ) ON_ERROR = 'CONTINUE'
 FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 
-
 --Copy into Users table from the user stage
 COPY INTO Products.fetch.users (
     _id,
@@ -172,7 +170,3 @@ from Products.fetch.brands;
 
 select *
 from Products.fetch.users;
-
-
-Select * from @products.fetch.receipts_stage (file_format=> 'Products.fetch.json_format');
-
