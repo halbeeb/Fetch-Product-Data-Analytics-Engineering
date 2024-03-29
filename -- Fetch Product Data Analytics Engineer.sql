@@ -200,7 +200,7 @@ FROM
 select * from receipt_items;
 
 --Brands Items Table
-CREATE OR REPLACE Table brand_cpg_details AS
+CREATE OR REPLACE TABLE brand_cpg_details AS
 SELECT
     b._id AS brand_id,
     b.name AS brand_name,
