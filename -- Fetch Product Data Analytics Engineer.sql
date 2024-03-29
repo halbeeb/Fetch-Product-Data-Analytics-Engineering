@@ -174,8 +174,8 @@ from Products.fetch.brands;
 select *
 from Products.fetch.users;
 
---Add the columns/fields in the rewardsReceiptItemList field to the receipt table
--- One by one alter the table and add the column into the rewardsReceiptItemList field to the receipt table
+-- Creating tables out of the tables, especially receipts and brands that have json like data
+-- Receipt Items Table
 
 CREATE OR REPLACE TABLE receipt_items AS
 SELECT
@@ -196,24 +196,21 @@ FROM
     receipts r,
     LATERAL FLATTEN(input => r.rewardsReceiptItemList) item;
 
-
-
--- Populate it with the data from the rewardlist items
--- Assuming `receipts` table schema can't directly accommodate multiple item entries and focusing on the first item
-
-
-
--- Creating tables out of the tables, especially receipts and brands that have json like data
--- Receipt Items Table
-
-
+--View the receipt items table just create
+select * from receipt_items;
 
 --Brands Items Table
+CREATE OR REPLACE Table brand_cpg_details AS
+SELECT
+    b._id AS brand_id,
+    b.name AS brand_name,
+    b.CPG:id::STRING AS cpg_id,
+    b.CPG:ref::STRING AS cpg_ref
+FROM
+    brands b;
 
-
-
-
-
+-- View the brand_cpg_details just created and examine it
+Select * from brand_cpg_details;
 
 --Generate a query that answers a predetermined business question
 -- 1. What are the top 5 brands by receipts scanned for most recent month?
