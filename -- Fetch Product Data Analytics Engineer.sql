@@ -176,50 +176,37 @@ from Products.fetch.users;
 
 --Add the columns/fields in the rewardsReceiptItemList field to the receipt table
 -- One by one alter the table and add the column into the rewardsReceiptItemList field to the receipt table
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_barcode STRING;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_description STRING;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_finalPrice FLOAT;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_itemPrice FLOAT;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_needsFetchReview BOOLEAN;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_partnerItemId STRING;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_preventTargetGapPoints BOOLEAN;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_quantityPurchased INT;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedBarcode STRING;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedNewItem BOOLEAN;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedPrice FLOAT;
-ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedQuantity INT;
+
+CREATE OR REPLACE TABLE receipt_items AS
+SELECT
+    r._id AS receipt_id,
+    item.value:barcode::VARCHAR AS barcode,
+    item.value:description::VARCHAR AS description,
+    item.value:finalPrice::FLOAT AS finalPrice,
+    item.value:itemPrice::FLOAT AS itemPrice,
+    item.value:needsFetchReview::BOOLEAN AS needsFetchReview,
+    item.value:partnerItemId::VARCHAR AS partnerItemId,
+    item.value:preventTargetGapPoints::BOOLEAN AS preventTargetGapPoints,
+    item.value:quantityPurchased::INTEGER AS quantityPurchased,
+    item.value:userFlaggedBarcode::VARCHAR AS userFlaggedBarcode,
+    item.value:userFlaggedNewItem::BOOLEAN AS userFlaggedNewItem,
+    item.value:userFlaggedPrice::FLOAT AS userFlaggedPrice,
+    item.value:userFlaggedQuantity::INTEGER AS userFlaggedQuantity
+FROM
+    receipts r,
+    LATERAL FLATTEN(input => r.rewardsReceiptItemList) item;
+
+
 
 -- Populate it with the data from the rewardlist items
 -- Assuming `receipts` table schema can't directly accommodate multiple item entries and focusing on the first item
-WITH FlattenedItems AS (
-    SELECT 
-        _id,
-        VALUE:barcode::STRING AS item_barcode,
-        VALUE:description::STRING AS item_description,
-        VALUE:finalPrice::FLOAT AS item_finalPrice,
-        VALUE:itemPrice::FLOAT AS item_itemPrice,
-        VALUE:needsFetchReview::BOOLEAN AS item_needsFetchReview,
-        VALUE:partnerItemId::STRING AS item_partnerItemId,
-        VALUE:preventTargetGapPoints::BOOLEAN AS item_preventTargetGapPoints,
-        VALUE:quantityPurchased::INT AS item_quantityPurchased,
-        VALUE:userFlaggedBarcode::STRING AS item_userFlaggedBarcode,
-        VALUE:userFlaggedNewItem::BOOLEAN AS item_userFlaggedNewItem,
-        VALUE:userFlaggedPrice::FLOAT AS item_userFlaggedPrice,
-        VALUE:userFlaggedQuantity::INT AS item_userFlaggedQuantity
-    FROM 
-        Products.fetch.receipts,
-        LATERAL FLATTEN(INPUT => rewardsReceiptItemList) LIMIT 1
-)
-UPDATE Products.fetch.receipts r
-SET (item_barcode, item_description, item_finalPrice, item_itemPrice, item_needsFetchReview, item_partnerItemId, item_preventTargetGapPoints, item_quantityPurchased, item_userFlaggedBarcode, item_userFlaggedNewItem, item_userFlaggedPrice, item_userFlaggedQuantity) = (
-    SELECT item_barcode, item_description, item_finalPrice, item_itemPrice, item_needsFetchReview, item_partnerItemId, item_preventTargetGapPoints, item_quantityPurchased, item_userFlaggedBarcode, item_userFlaggedNewItem, item_userFlaggedPrice, item_userFlaggedQuantity
-    FROM FlattenedItems fi
-    WHERE fi._id = r._id
-);
+
 
 
 -- Creating tables out of the tables, especially receipts and brands that have json like data
 -- Receipt Items Table
+
+
 
 --Brands Items Table
 
