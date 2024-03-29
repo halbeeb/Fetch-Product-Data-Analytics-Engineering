@@ -1,3 +1,5 @@
+-- Review unstructured JSON data and diagram a new structured relational data model
+
 -- Creating warehouse, database, and schema
 CREATE WAREHOUSE IF NOT EXISTS Fetch_Rewards
     WITH WAREHOUSE_SIZE = 'X-SMALL'
@@ -165,8 +167,125 @@ FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 select *
 from Products.fetch.receipts;
 
+select count(*) from products.fetch.receipts;
 select *
 from Products.fetch.brands;
 
 select *
 from Products.fetch.users;
+
+--Add the columns/fields in the rewardsReceiptItemList field to the receipt table
+-- One by one alter the table and add the column into the rewardsReceiptItemList field to the receipt table
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_barcode STRING;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_description STRING;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_finalPrice FLOAT;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_itemPrice FLOAT;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_needsFetchReview BOOLEAN;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_partnerItemId STRING;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_preventTargetGapPoints BOOLEAN;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_quantityPurchased INT;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedBarcode STRING;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedNewItem BOOLEAN;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedPrice FLOAT;
+ALTER TABLE Products.fetch.receipts ADD COLUMN item_userFlaggedQuantity INT;
+
+-- Populate it with the data from the rewardlist items
+-- Assuming `receipts` table schema can't directly accommodate multiple item entries and focusing on the first item
+WITH FlattenedItems AS (
+    SELECT 
+        _id,
+        VALUE:barcode::STRING AS item_barcode,
+        VALUE:description::STRING AS item_description,
+        VALUE:finalPrice::FLOAT AS item_finalPrice,
+        VALUE:itemPrice::FLOAT AS item_itemPrice,
+        VALUE:needsFetchReview::BOOLEAN AS item_needsFetchReview,
+        VALUE:partnerItemId::STRING AS item_partnerItemId,
+        VALUE:preventTargetGapPoints::BOOLEAN AS item_preventTargetGapPoints,
+        VALUE:quantityPurchased::INT AS item_quantityPurchased,
+        VALUE:userFlaggedBarcode::STRING AS item_userFlaggedBarcode,
+        VALUE:userFlaggedNewItem::BOOLEAN AS item_userFlaggedNewItem,
+        VALUE:userFlaggedPrice::FLOAT AS item_userFlaggedPrice,
+        VALUE:userFlaggedQuantity::INT AS item_userFlaggedQuantity
+    FROM 
+        Products.fetch.receipts,
+        LATERAL FLATTEN(INPUT => rewardsReceiptItemList) LIMIT 1
+)
+UPDATE Products.fetch.receipts r
+SET (item_barcode, item_description, item_finalPrice, item_itemPrice, item_needsFetchReview, item_partnerItemId, item_preventTargetGapPoints, item_quantityPurchased, item_userFlaggedBarcode, item_userFlaggedNewItem, item_userFlaggedPrice, item_userFlaggedQuantity) = (
+    SELECT item_barcode, item_description, item_finalPrice, item_itemPrice, item_needsFetchReview, item_partnerItemId, item_preventTargetGapPoints, item_quantityPurchased, item_userFlaggedBarcode, item_userFlaggedNewItem, item_userFlaggedPrice, item_userFlaggedQuantity
+    FROM FlattenedItems fi
+    WHERE fi._id = r._id
+);
+
+
+-- Creating tables out of the tables, especially receipts and brands that have json like data
+-- Receipt Items Table
+
+--Brands Items Table
+
+
+
+
+
+
+--Generate a query that answers a predetermined business question
+-- 1. What are the top 5 brands by receipts scanned for most recent month?
+-- Top 5 Brands by Receipts Scanned for Most Recent Month
+SELECT b.NAME, COUNT(*) AS ReceiptsScanned
+FROM receipts r
+JOIN brands b ON r.brand_id = b._ID  -- Assuming there's a way to associate receipts to brands
+WHERE DATE_TRUNC('month', r.DATESCANNED) = DATE_TRUNC('month', CURRENT_DATE() - INTERVAL '1 month')
+GROUP BY b.NAME
+ORDER BY ReceiptsScanned DESC
+LIMIT 5;
+
+
+-- 2. How does the ranking of the top 5 brands by receipts scanned for the recent month compare to the ranking for the previous month?
+-- Ranking of the Top 5 Brands by Receipts Scanned for the Recent Month Compared to the Previous Month
+-- Adjust the interval as needed to target the specific "recent" month
+SELECT b.NAME, COUNT(*) AS ReceiptsScanned
+FROM receipts r
+JOIN brands b ON r.brand_id = b._ID
+WHERE DATE_TRUNC('month', r.DATESCANNED) = DATE_TRUNC('month', CURRENT_DATE())
+GROUP BY b.NAME
+ORDER BY ReceiptsScanned DESC
+LIMIT 5;
+
+
+-- 3. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+-- Average Spend from Receipts with 'Accepted' or 'Rejected' Status
+
+SELECT REWARDSRECEIPTSTATUS, AVG(TOTALSPENT) AS AverageSpend
+FROM receipts
+WHERE REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
+GROUP BY REWARDSRECEIPTSTATUS;
+
+-- 4. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+-- Total Number of Items Purchased from Receipts with 'Accepted' or 'Rejected' Status
+SELECT REWARDSRECEIPTSTATUS, SUM(PURCHASEDITEMCOUNT) AS TotalItemsPurchased
+FROM receipts
+WHERE REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
+GROUP BY REWARDSRECEIPTSTATUS;
+
+
+-- 5. Which brand has the most spend among users who were created within the past 6 months?
+-- Brand with Most Spend Among Users Created Within the Past 6 Months
+SELECT b.NAME, SUM(r.TOTALSPENT) AS TotalSpend
+FROM receipts r
+JOIN users u ON r.USERID = u._ID
+JOIN brands b ON r.brand_id = b._ID  -- Assuming a way to associate receipts to brands
+WHERE u.CREATEDDATE > CURRENT_DATE() - INTERVAL '6 months'
+GROUP BY b.NAME
+ORDER BY TotalSpend DESC
+LIMIT 1;
+
+-- 6. Which brand has the most transactions among users who were created within the past 6 months?
+-- Brand with Most Transactions Among Users Created Within the Past 6 Months
+SELECT b.NAME, COUNT(r._ID) AS Transactions
+FROM receipts r
+JOIN users u ON r.USERID = u._ID
+JOIN brands b ON r.brand_id = b._ID  -- Assuming a way to associate receipts to brands
+WHERE u.CREATEDDATE > CURRENT_DATE() - INTERVAL '6 months'
+GROUP BY b.NAME
+ORDER BY Transactions DESC
+LIMIT 1;
