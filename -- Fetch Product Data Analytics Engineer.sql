@@ -10,7 +10,6 @@ CREATE WAREHOUSE IF NOT EXISTS Fetch_Rewards
 --Create the database name Products
 CREATE DATABASE IF NOT EXISTS Products;
 
-
 --Create the Schema name Fetch
 CREATE SCHEMA IF NOT EXISTS Products.fetch;
 
@@ -209,38 +208,92 @@ FROM
 
 -- View the brand_cpg_details just created and examine it
 Select * from brand_cpg_details;
+select * from brands;
+select * from receipts;
+select * from receipt_items;
 
 --Generate a query that answers a predetermined business question
 -- 1. What are the top 5 brands by receipts scanned for most recent month?
 -- Top 5 Brands by Receipts Scanned for Most Recent Month
-SELECT b.NAME, COUNT(*) AS ReceiptsScanned
+SELECT ri.barcode, COUNT(*) AS ReceiptsScanned
 FROM receipts r
-JOIN brands b ON r.brand_id = b._ID  -- Assuming there's a way to associate receipts to brands
+JOIN Receipt_items ri on ri.receipt_id=r._id
 WHERE DATE_TRUNC('month', r.DATESCANNED) = DATE_TRUNC('month', CURRENT_DATE() - INTERVAL '1 month')
-GROUP BY b.NAME
+GROUP BY ri.barcode
 ORDER BY ReceiptsScanned DESC
 LIMIT 5;
- 
+
+select b.name AS BrandName, count(datescanned) AS ReceiptsScanned
+from receipts r
+JOIN receipt_items ri ON ri.receipt_id = r._id
+JOIN brands b ON ri.barcode = b.barcode
+WHERE DATE_TRUNC('month', r.DATESCANNED) = (
+    SELECT DATE_TRUNC('month', MAX(r2.DATESCANNED))
+    FROM receipts r2
+)
+Group by b.name
+ORDER BY ReceiptsScanned DESC
+LIMIT 5;
+
 
 -- 2. How does the ranking of the top 5 brands by receipts scanned for the recent month compare to the ranking for the previous month?
 -- Ranking of the Top 5 Brands by Receipts Scanned for the Recent Month Compared to the Previous Month
 -- Adjust the interval as needed to target the specific "recent" month
-SELECT b.NAME, COUNT(*) AS ReceiptsScanned
-FROM receipts r
-JOIN brands b ON r.brand_id = b._ID
-WHERE DATE_TRUNC('month', r.DATESCANNED) = DATE_TRUNC('month', CURRENT_DATE())
-GROUP BY b.NAME
-ORDER BY ReceiptsScanned DESC
-LIMIT 5;
 
+WITH LatestDate AS (
+    SELECT DATE_TRUNC('month', MAX(DATESCANNED)) AS LatestMonth
+    FROM receipts
+),
+RecentMonth AS (
+    SELECT 
+        b.name AS BrandName,
+        COUNT(*) AS ReceiptsScanned,
+        RANK() OVER (ORDER BY COUNT(*) DESC) AS RankRecent
+    FROM receipts r
+    JOIN receipt_items ri ON ri.receipt_id = r._id
+    JOIN brands b ON ri.barcode = b.barcode,
+    LatestDate ld
+    WHERE DATE_TRUNC('month', r.DATESCANNED) = ld.LatestMonth
+    GROUP BY b.name
+    LIMIT 5
+),
+PreviousMonth AS (
+    SELECT 
+        b.name AS BrandName,
+        COUNT(*) AS ReceiptsScanned,
+        RANK() OVER (ORDER BY COUNT(*) DESC) AS RankPrevious
+    FROM receipts r
+    JOIN receipt_items ri ON ri.receipt_id = r._id
+    JOIN brands b ON ri.barcode = b.barcode,
+    LatestDate ld
+    WHERE DATE_TRUNC('month', r.DATESCANNED) = DATEADD(month, -1, ld.LatestMonth)
+    GROUP BY b.name
+    LIMIT 5
+)
+SELECT 
+    rm.BrandName,
+    rm.RankRecent,
+    pm.RankPrevious
+FROM RecentMonth rm
+LEFT JOIN PreviousMonth pm ON rm.BrandName = pm.BrandName
+ORDER BY rm.RankRecent;
 
 -- 3. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 -- Average Spend from Receipts with 'Accepted' or 'Rejected' Status
 
-SELECT REWARDSRECEIPTSTATUS, AVG(TOTALSPENT) AS AverageSpend
-FROM receipts
-WHERE REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
-GROUP BY REWARDSRECEIPTSTATUS;
+SELECT 
+    REWARDSRECEIPTSTATUS, 
+    AVG(TOTALSPENT) AS AverageSpend
+FROM 
+    receipts
+WHERE 
+    REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
+    AND TOTALSPENT IS NOT NULL
+GROUP BY 
+    REWARDSRECEIPTSTATUS
+ORDER BY 
+    AverageSpend DESC;
+
 
 -- 4. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 -- Total Number of Items Purchased from Receipts with 'Accepted' or 'Rejected' Status
