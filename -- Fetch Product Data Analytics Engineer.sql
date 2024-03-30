@@ -297,30 +297,76 @@ ORDER BY
 
 -- 4. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 -- Total Number of Items Purchased from Receipts with 'Accepted' or 'Rejected' Status
-SELECT REWARDSRECEIPTSTATUS, SUM(PURCHASEDITEMCOUNT) AS TotalItemsPurchased
-FROM receipts
-WHERE REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
-GROUP BY REWARDSRECEIPTSTATUS;
-
+SELECT 
+    REWARDSRECEIPTSTATUS, 
+    SUM(purchasedItemCount) AS TotalItemsPurchased
+FROM 
+    receipts
+WHERE 
+    REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
+    AND purchasedItemCount IS NOT NULL
+GROUP BY 
+    REWARDSRECEIPTSTATUS
+ORDER BY 
+    TotalItemsPurchased DESC;
 
 -- 5. Which brand has the most spend among users who were created within the past 6 months?
 -- Brand with Most Spend Among Users Created Within the Past 6 Months
-SELECT b.NAME, SUM(r.TOTALSPENT) AS TotalSpend
-FROM receipts r
-JOIN users u ON r.USERID = u._ID
-JOIN brands b ON r.brand_id = b._ID  -- Assuming a way to associate receipts to brands
-WHERE u.CREATEDDATE > CURRENT_DATE() - INTERVAL '6 months'
-GROUP BY b.NAME
-ORDER BY TotalSpend DESC
+WITH LatestUserDate AS (
+    SELECT MAX(CAST(createdDate AS DATE)) AS MaxCreateDate
+    FROM Users
+),
+RecentUsers AS (
+    SELECT _id
+    FROM Users
+    WHERE createdDate >= DATEADD(month, -6, (SELECT MaxCreateDate FROM LatestUserDate))
+),
+BrandSpend AS (
+    SELECT 
+        b.name AS BrandName,
+        SUM(ri.finalPrice) AS TotalBrandSpend
+    FROM Receipts r
+    JOIN RecentUsers ru ON ru._id = r.userId
+    JOIN ReceiptItems ri ON r._id = ri.receiptId
+    JOIN Brands b ON ri.barcode = b.barcode
+    GROUP BY b.name
+)
+SELECT BrandName, TotalBrandSpend
+FROM BrandSpend
+ORDER BY TotalBrandSpend DESC
 LIMIT 1;
 
 -- 6. Which brand has the most transactions among users who were created within the past 6 months?
 -- Brand with Most Transactions Among Users Created Within the Past 6 Months
-SELECT b.NAME, COUNT(r._ID) AS Transactions
-FROM receipts r
-JOIN users u ON r.USERID = u._ID
-JOIN brands b ON r.brand_id = b._ID  -- Assuming a way to associate receipts to brands
-WHERE u.CREATEDDATE > CURRENT_DATE() - INTERVAL '6 months'
-GROUP BY b.NAME
-ORDER BY Transactions DESC
+
+WITH LatestUserDate AS (
+    SELECT MAX(CAST(createdDate AS DATE)) AS MaxCreateDate
+    FROM Users
+),
+RecentUsers AS (
+    SELECT _id
+    FROM Users
+    WHERE CAST(createdDate AS DATE) >= DATEADD(month, -6, (SELECT MaxCreateDate FROM LatestUserDate))
+),
+UserTransactions AS (
+    SELECT 
+        r.userId, 
+        ri.barcode,
+        COUNT(r._id) AS Transactions
+    FROM Receipts r
+    JOIN RecentUsers ru ON r.userId = ru._id
+    JOIN ReceiptItems ri ON r._id = ri.receiptId
+    GROUP BY r.userId, ri.barcode
+),
+BrandTransactions AS (
+    SELECT 
+        b.name AS BrandName,
+        SUM(ut.Transactions) AS TotalTransactions
+    FROM UserTransactions ut
+    JOIN Brands b ON ut.barcode = b.barcode
+    GROUP BY b.name
+)
+SELECT BrandName, TotalTransactions
+FROM BrandTransactions
+ORDER BY TotalTransactions DESC
 LIMIT 1;
