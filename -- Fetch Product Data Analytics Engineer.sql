@@ -167,7 +167,6 @@ FILE_FORMAT = (FORMAT_NAME = Products.fetch.json_format);
 select *
 from Products.fetch.receipts;
 
-select count(*) from products.fetch.receipts;
 select *
 from Products.fetch.brands;
 
@@ -176,7 +175,6 @@ from Products.fetch.users;
 
 -- Creating tables out of the tables, especially receipts and brands that have json like data
 -- Receipt Items Table
-
 CREATE OR REPLACE TABLE receipt_items AS
 SELECT
     r._id AS receipt_id,
@@ -222,7 +220,7 @@ WHERE DATE_TRUNC('month', r.DATESCANNED) = DATE_TRUNC('month', CURRENT_DATE() - 
 GROUP BY b.NAME
 ORDER BY ReceiptsScanned DESC
 LIMIT 5;
-
+ 
 
 -- 2. How does the ranking of the top 5 brands by receipts scanned for the recent month compare to the ranking for the previous month?
 -- Ranking of the Top 5 Brands by Receipts Scanned for the Recent Month Compared to the Previous Month
