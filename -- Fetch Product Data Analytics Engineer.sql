@@ -210,9 +210,11 @@ FROM
 Select * from brand_cpg_details;
 select * from brands;
 select * from receipts;
+Select * from users;
 select * from receipt_items;
 
---Generate a query that answers a predetermined business question
+
+/* --Generate a query that answers a predetermined business question
 -- 1. What are the top 5 brands by receipts scanned for most recent month?
 -- Top 5 Brands by Receipts Scanned for Most Recent Month
 SELECT ri.barcode, COUNT(*) AS ReceiptsScanned
@@ -278,39 +280,45 @@ FROM RecentMonth rm
 LEFT JOIN PreviousMonth pm ON rm.BrandName = pm.BrandName
 ORDER BY rm.RankRecent;
 
--- 3. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+*/ 
+
+-- Query 1
+-- When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 -- Average Spend from Receipts with 'Accepted' or 'Rejected' Status
 
 SELECT 
-    REWARDSRECEIPTSTATUS, 
-    AVG(TOTALSPENT) AS AverageSpend
+    REWARDSRECEIPTSTATUS as "Reward Receipt Status", 
+    Round(AVG(TOTALSPENT),2) AS "Average Spend"
 FROM 
     receipts
 WHERE 
-    REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
+    REWARDSRECEIPTSTATUS IN ('FINISHED', 'REJECTED')
     AND TOTALSPENT IS NOT NULL
 GROUP BY 
     REWARDSRECEIPTSTATUS
 ORDER BY 
-    AverageSpend DESC;
+    "Average Spend" DESC;
 
 
--- 4. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+-- Query 2
+-- When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 -- Total Number of Items Purchased from Receipts with 'Accepted' or 'Rejected' Status
+
 SELECT 
-    REWARDSRECEIPTSTATUS, 
-    SUM(purchasedItemCount) AS TotalItemsPurchased
+    REWARDSRECEIPTSTATUS as "Rewards Receipt Status", 
+    SUM(purchasedItemCount) AS "Total Items Purchased"
 FROM 
     receipts
 WHERE 
-    REWARDSRECEIPTSTATUS IN ('Accepted', 'Rejected')
+    REWARDSRECEIPTSTATUS IN ('FINISHED', 'REJECTED')
     AND purchasedItemCount IS NOT NULL
 GROUP BY 
     REWARDSRECEIPTSTATUS
 ORDER BY 
-    TotalItemsPurchased DESC;
+    "Total Items Purchased" DESC;
 
--- 5. Which brand has the most spend among users who were created within the past 6 months?
+-- Query 3
+-- Which brand has the most spend among users who were created within the past 6 months?
 -- Brand with Most Spend Among Users Created Within the Past 6 Months
 WITH LatestUserDate AS (
     SELECT MAX(CAST(createdDate AS DATE)) AS MaxCreateDate
@@ -327,7 +335,7 @@ BrandSpend AS (
         SUM(ri.finalPrice) AS TotalBrandSpend
     FROM Receipts r
     JOIN RecentUsers ru ON ru._id = r.userId
-    JOIN ReceiptItems ri ON r._id = ri.receiptId
+    JOIN Receipt_Items ri ON r._id = ri.receipt_Id
     JOIN Brands b ON ri.barcode = b.barcode
     GROUP BY b.name
 )
@@ -336,7 +344,8 @@ FROM BrandSpend
 ORDER BY TotalBrandSpend DESC
 LIMIT 1;
 
--- 6. Which brand has the most transactions among users who were created within the past 6 months?
+-- Query 4
+-- Which brand has the most transactions among users who were created within the past 6 months?
 -- Brand with Most Transactions Among Users Created Within the Past 6 Months
 
 WITH LatestUserDate AS (
@@ -354,8 +363,8 @@ UserTransactions AS (
         ri.barcode,
         COUNT(r._id) AS Transactions
     FROM Receipts r
-    JOIN RecentUsers ru ON r.userId = ru._id
-    JOIN ReceiptItems ri ON r._id = ri.receiptId
+    JOIN Users ru ON r.userId = ru._id
+    JOIN Receipt_Items ri ON r._id = ri.receipt_Id
     GROUP BY r.userId, ri.barcode
 ),
 BrandTransactions AS (
@@ -366,7 +375,9 @@ BrandTransactions AS (
     JOIN Brands b ON ut.barcode = b.barcode
     GROUP BY b.name
 )
-SELECT BrandName, TotalTransactions
+SELECT BrandName as"Brand Name", "Total Transactions
 FROM BrandTransactions
 ORDER BY TotalTransactions DESC
 LIMIT 1;
+
+-- End
