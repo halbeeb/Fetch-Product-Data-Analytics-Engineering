@@ -286,36 +286,48 @@ ORDER BY rm.RankRecent;
 -- When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 -- Average Spend from Receipts with 'Accepted' or 'Rejected' Status
 
+-- Assumed that FINISHED and SUBMITED are ACCEPTED while FLAGGED and REJECTED are REJECTED while other stay as they are:
 SELECT 
-    REWARDSRECEIPTSTATUS as "Reward Receipt Status", 
-    Round(AVG(TOTALSPENT),2) AS "Average Spend"
+    CASE
+        WHEN REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED') THEN 'ACCEPTED'
+        WHEN REWARDSRECEIPTSTATUS IN ('REJECTED', 'FLAGGED') THEN 'REJECTED'
+        ELSE REWARDSRECEIPTSTATUS
+    END AS "Reward Receipt Status", 
+    ROUND(AVG(TOTALSPENT), 2) AS "Average Spend"
 FROM 
     receipts
 WHERE 
-    REWARDSRECEIPTSTATUS IN ('FINISHED', 'REJECTED')
+    REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED', 'REJECTED', 'FLAGGED')
     AND TOTALSPENT IS NOT NULL
 GROUP BY 
-    REWARDSRECEIPTSTATUS
+    "Reward Receipt Status"
 ORDER BY 
     "Average Spend" DESC;
+
 
 
 -- Query 2
 -- When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 -- Total Number of Items Purchased from Receipts with 'Accepted' or 'Rejected' Status
 
+-- Assumed that FINISHED and SUBMITED are ACCEPTED while FLAGGED and REJECTED are REJECTED while other stay as they are
 SELECT 
-    REWARDSRECEIPTSTATUS as "Rewards Receipt Status", 
+    CASE
+        WHEN REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED') THEN 'ACCEPTED'
+        WHEN REWARDSRECEIPTSTATUS IN ('REJECTED', 'FLAGGED') THEN 'REJECTED'
+        ELSE REWARDSRECEIPTSTATUS
+    END AS "Rewards Receipt Status", 
     SUM(purchasedItemCount) AS "Total Items Purchased"
 FROM 
     receipts
 WHERE 
-    REWARDSRECEIPTSTATUS IN ('FINISHED', 'REJECTED')
+    REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED', 'REJECTED', 'FLAGGED')
     AND purchasedItemCount IS NOT NULL
 GROUP BY 
-    REWARDSRECEIPTSTATUS
+    "Rewards Receipt Status"
 ORDER BY 
     "Total Items Purchased" DESC;
+
 
 -- Query 3
 -- Which brand has the most spend among users who were created within the past 6 months?
