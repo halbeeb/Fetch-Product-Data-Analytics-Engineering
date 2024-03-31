@@ -442,5 +442,4 @@ SELECT
     COUNT(CPG_ID) AS non_missing_cpgid
 FROM "BRAND_CPG_DETAILS";
 
-
---End
+--End of the queries
