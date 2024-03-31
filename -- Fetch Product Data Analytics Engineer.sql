@@ -455,3 +455,4 @@ SELECT
 FROM "BRAND_CPG_DETAILS";
 
 --End of the queries
+-- Thank you.....
