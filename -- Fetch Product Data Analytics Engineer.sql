@@ -375,9 +375,72 @@ BrandTransactions AS (
     JOIN Brands b ON ut.barcode = b.barcode
     GROUP BY b.name
 )
-SELECT BrandName as"Brand Name", "Total Transactions
+SELECT BrandName as"Brand Name", TotalTransactions as "Total Transactions"
 FROM BrandTransactions
 ORDER BY TotalTransactions DESC
 LIMIT 1;
 
--- End
+
+--Further examination of the source file for data quality issues
+-- For users
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(STATE) AS non_missing_state,
+    COUNT(LASTLOGIN) AS non_missing_lastlogin
+FROM "USERS";
+
+-- For brands
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(BRANDCODE) AS non_missing_brandcode,
+    COUNT(CATEGORY) AS non_missing_category,
+    COUNT(CATEGORYCODE) AS non_missing_categorycode,
+    COUNT(TOPBRAND) AS non_missing_topbrand
+FROM "BRANDS";
+
+-- For receipts
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(BONUSPOINTSEARNED) AS non_missing_bonuspointsearned,
+    COUNT(BONUSPOINTSEARNEDREASON) AS non_missing_bonuspointsearnedreason,
+    COUNT(CREATEDATE) AS non_missing_createdate,
+    COUNT(DATESCANNED) AS non_missing_datescanned,
+    COUNT(FINISHEDDATE) AS non_missing_finisheddate,
+    COUNT(MODIFYDATE) AS non_missing_modifydate,
+    COUNT(POINTSAWARDEDDATE) AS non_missing_pointsawardeddate,
+    COUNT(POINTSEARNED) AS non_missing_pointsearned,
+    COUNT(PURCHASEDATE) AS non_missing_purchasedate,
+    COUNT(PURCHASEDITEMCOUNT) AS non_missing_purchaseditemcount,
+    COUNT(REWARDSRECEIPTITEMLIST) AS non_missing_rewardsreceiptitemlist,
+    COUNT(REWARDSRECEIPTSTATUS) AS non_missing_rewardsreceiptstatus,
+    COUNT(TOTALSPENT) AS non_missing_totalspent,
+    COUNT(USERID) AS non_missing_userid
+FROM "RECEIPTS";
+
+-- For receipt_items
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(RECEIPT_ID) AS non_missing_receipt_id,
+    COUNT(BARCODE) AS non_missing_barcode,
+    COUNT(DESCRIPTION) AS non_missing_description,
+    COUNT(FINALPRICE) AS non_missing_finalprice,
+    COUNT(ITEMPRICE) AS non_missing_itemprice,
+    COUNT(NEEDSFETCHREVIEW) AS non_missing_needsfetchreview,
+    COUNT(PARTNERITEMID) AS non_missing_partneritemid,
+    COUNT(PREVENTTARGETGAPPOINTS) AS non_missing_preventtargetgapoints,
+    COUNT(QUANTITYPURCHASED) AS non_missing_quantitypurchased,
+    COUNT(USERFLAGGEDBARCODE) AS non_missing_userflaggedbarcode,
+    COUNT(USERFLAGGEDNEWITEM) AS non_missing_userflaggednewitem,
+    COUNT(USERFLAGGEDPRICE) AS non_missing_userflaggedprice,
+    COUNT(USERFLAGGEDQUANTITY) AS non_missing_userflaggedquantity
+FROM "RECEIPT_ITEMS";
+
+-- For brand_cpg_details
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(BRAND_ID) AS non_missing_brandid,
+    COUNT(CPG_ID) AS non_missing_cpgid
+FROM "BRAND_CPG_DETAILS";
+
+
+--End
