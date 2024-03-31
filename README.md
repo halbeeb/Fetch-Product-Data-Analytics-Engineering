@@ -36,7 +36,7 @@ Given the receipts, brands and users data, and the receipts_items and brand cgp 
 [ER Diagram]
 
 ## SQL Query That Answers Four Predetermined Business Question**
-  given the relational above, the four predetermined business are thus answered below:
+  given the relational above and the assumptions earlier stated, the four predetermined business are thus answered below:
 
 **When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?**
 
