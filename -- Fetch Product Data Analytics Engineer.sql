@@ -280,7 +280,9 @@ FROM RecentMonth rm
 LEFT JOIN PreviousMonth pm ON rm.BrandName = pm.BrandName
 ORDER BY rm.RankRecent;
 
-*/ 
+*/
+
+-- The four predetermined questions are thus answered as follows using queries.
 
 -- Query 1
 -- When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
@@ -303,8 +305,6 @@ GROUP BY
     "Reward Receipt Status"
 ORDER BY 
     "Average Spend" DESC;
-
-
 
 -- Query 2
 -- When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
@@ -351,7 +351,7 @@ BrandSpend AS (
     JOIN Brands b ON ri.barcode = b.barcode
     GROUP BY b.name
 )
-SELECT BrandName, TotalBrandSpend
+SELECT BrandName as "Brand Name", TotalBrandSpend as "Total Brand Spend"
 FROM BrandSpend
 ORDER BY TotalBrandSpend DESC
 LIMIT 1;

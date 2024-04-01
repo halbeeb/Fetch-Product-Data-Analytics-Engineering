@@ -55,6 +55,7 @@ This project focuses on analyzing and structuring unstructured JSON data provide
 9. **Receipt Status Interpretation:** 
    - Receipt statuses `Finished` and `Submitted` are considered `ACCEPTED`.
    - Statuses `Flagged` and `Rejected` are considered `REJECTED`.
+10.  The data is presummed not to change during the course of this exercise
 
 ## Review of Unstructured Data and Relational Data Modeling
 Given the receipts, brands and users data, and the receipts_items and brand cgp detail from receipts and brands respectively, below show the relational data modelling designed in the Snowflake cloud data warehouse and equally obtainable in other cloud data warehouse:
@@ -66,59 +67,79 @@ Given the receipts, brands and users data, and the receipts_items and brand cgp 
 ## SQL Queries for Predetermined Business Question
 
 given the relational above and the assumptions earlier stated, the four predetermined business are thus answered below:
-
-
-
 **When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?**
 
+REWARD RECEIPT STATUS  | AVERAGE SPEND
+-----------------------|----------------
+              REJECTED | 85.10
+              ACCEPTED | 80.85
+
+> It is evident as seen from the table that the rejected is greater than the Accepted on average.
 
 
 **When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?**
-
-
+REWARD RECEIPT STATUS  | TOTAL ITEMS PURCHASED
+-----------------------|----------------
+              ACCEPTED | 8184
+              REJECTED | 1187
+              
+> From the table above, ACCEPTED is greater when considering the number of items purchased from receipts.
 
 **Which brand has the most spend among users who were created within the past 6 months?**
 
 
+BRAND NAME            | TOTAL BRAND SPEND
+----------------------|---------------------
+Cracker Barrel Cheese | 253.26
+
+> As seen from above, *Cracker Barrel Cheese* brand has the most spend among the users created within past 6 months.
+
 
 **Which brand has the most transactions among users who were created within the past 6 months?**
 
+BRAND NAME            | TOTAL TRANSACTIONS
+----------------------|---------------------
+Tostitos              | 43
+
+> The brand with most transactions within past 6 months is **Tostitos**
 
 
 ## Data Quality Evaluation
 
 #### Untidiness (Structural Issues)
 
-receipts:
-Contains both receipt-level and item-level information in a single table, suggesting a need for normalization.
+**receipts:**
+> Contains both receipt-level and item-level information in a single table, suggesting a need for normalization.
 General:
-No other immediate structural issues are apparent without more context on the data relationships. However, the potential overlap between brands and brand_cpg_details could be considered here once the relationship is clearer.
+> No other immediate structural issues are apparent without more context on the data relationships. However, the potential overlap between brands and brand_cpg_details could be considered here once the relationship is clearer.
 
 #### Messiness (Content Issues)
 
-users:
-Incorrect data types for date columns (CREATEDDATE, LASTLOGIN).
+**users:**
+>Incorrect data types for date columns (CREATEDDATE, LASTLOGIN).
 brands:
-TOPBRAND column uses object data type possibly due to missing values, which may complicate analysis involving this boolean-like variable.
+>TOPBRAND column uses object data type possibly due to missing values, which may complicate analysis involving this boolean-like variable.
 receipts:
-Mixed data types for columns that appear to be boolean (NEEDSFETCHREVIEW, ITEM_USERFLAGGEDNEWITEM), and numeric columns used for identifiers are in float64 due to NaNs, suggesting messy data entry or processing.
+> Mixed data types for columns that appear to be boolean (NEEDSFETCHREVIEW, ITEM_USERFLAGGEDNEWITEM), and numeric columns used for identifiers are in float64 due to NaNs, suggesting messy data entry or processing.
 receipt_items:
-Mixed types for columns that seem to represent boolean values (NEEDSFETCHREVIEW, USERFLAGGEDNEWITEM).
-Inconsistent handling of missing data, with numerous missing values in user-flagged columns and BARCODE.
+> Mixed types for columns that seem to represent boolean values (NEEDSFETCHREVIEW, USERFLAGGEDNEWITEM).
+> Inconsistent handling of missing data, with numerous missing values in user-flagged columns and BARCODE.
 
 #### Completeness and Integrity
-users:
-Missing values in STATE and LASTLOGIN.
-Duplicate rows identified.
-brands:
-Significant missing values in BRANDCODE, CATEGORY, CATEGORYCODE, and TOPBRAND.
-receipts:
-Substantial missing values across various columns, particularly item-related ones.
-receipt_items:
-Extensive missing data, particularly in BARCODE and user-flagged columns, which may affect completeness and data quality.
-brand_cpg_details:
-Appears complete with no missing values or duplicate rows, suggesting good integrity for this dataset. However, the relationship with brands needs to be checked for redundancy and consistency.
-These categories highlight key areas for data cleaning and preparation. Addressing these issues will be crucial for ensuring the datasets are in a usable state for analysis.
+
+**users:**
+> Missing values in STATE and LASTLOGIN.
+> Duplicate rows identified.
+
+**brands:**
+> Significant missing values in BRANDCODE, CATEGORY, CATEGORYCODE, and TOPBRAND.
+**receipts:**
+> Substantial missing values across various columns, particularly item-related ones.
+**receipt_items:**
+> Extensive missing data, particularly in BARCODE and user-flagged columns, which may affect completeness and data quality.
+**brand_cpg_details:**
+>Appears complete with no missing values or duplicate rows, suggesting good integrity for this dataset. However, the relationship with brands needs to be checked for redundancy and consistency.
+
+These categories highlight key areas for data cleaning and preparation. 
 
 ## Stakeholder Communication
-
