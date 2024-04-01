@@ -23,16 +23,16 @@ This project focuses on analyzing and structuring unstructured JSON data provide
 #### 4. Stakeholder Communication
    
 #### Analytical Tools Used
-> **Cloud Data Warehouse: Snowflake**
-> **Cloud Object Storage: AWS S3 Bucket**
-> **Version Control: Git Bash**
-> **Repository: Github**
 
-#### Assumptions
+##### Cloud Data Warehouse: Snowflake
+##### Cloud Object Storage: AWS S3 Bucket
+##### Version Control: Git Bash
+##### Repository: Github
+
+### Assumptions
 
 1. **Fetch_Rewards Data Warehouse:** Designed for small-scale operations with a product-centric analytics approach, housed in the `fetch` schema within the `Products` database.
-2. **Data Ingestion from S3:** Utilizes stages for ingesting semi-structured JSON data from S3 buckets, indicating reliance on cloud storage for data collection.
-3. **Data Format Choices:** 
+2. **Data Ingestion from S3:** Utilizes stages for ingesting semi-structured JSON data from S3 buckets, indicating reliance on cloud storage fo r data collectio. **Data Format Choices:** 
    - JSON file format for semi-structured data likely from NoSQL databases or web applications.
    - GZIP compression for storage and transfer efficiency.
    - Format options like STRIP_OUTER_ARRAY suggest the need for JSON data cleanup during ingestion.
@@ -49,43 +49,43 @@ This project focuses on analyzing and structuring unstructured JSON data provide
    - Focus on consumer behavior, brand performance, and temporal sales trends.
    - Interest in month-over-month data comparison to monitor market dynamics and consumer engagement.
 7. **Data Quality and Exploration:** 
-   - Script concludes with concerns on data quality, indicating potential issues with incomplete/null values, format inconsistencies, or incorrect timestamps.
-8. **Assumptions on JSON Structure:** 
-   - Likely originating from a MongoDB export, inferred from syntax ($1:_id:"$oid", $1:createDate:"$date").
-9. **Receipt Status Interpretation:** 
+   - Some part of the quality data check were performed through observations
+8. **Receipt Status Interpretation:** 
    - Receipt statuses `Finished` and `Submitted` are considered `ACCEPTED`.
    - Statuses `Flagged` and `Rejected` are considered `REJECTED`.
-10.  The data is presummed not to change during the course of this exercise
+9.  The data is presummed not to change at any time.
 
 ## Review of Unstructured Data and Relational Data Modeling
 Given the receipts, brands and users data, and the receipts_items and brand cgp detail from receipts and brands respectively, below show the relational data modelling designed in the Snowflake cloud data warehouse and equally obtainable in other cloud data warehouse:
 
 #### Product.Fetch Relational Data Modeling/ Entity Relationship Diagram
 
-[ER Diagram.png]
+![ER Diagram.png](ER Diagram.png)
 
 ## SQL Queries for Predetermined Business Question
 
 given the relational above and the assumptions earlier stated, the four predetermined business are thus answered below:
-**When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?**
+
+#### 1. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 
 REWARD RECEIPT STATUS  | AVERAGE SPEND
------------------------|----------------
+-----------------------|-----------------------
               REJECTED | 85.10
               ACCEPTED | 80.85
 
 > It is evident as seen from the table that the rejected is greater than the Accepted on average.
 
 
-**When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?**
+#### 2. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+
 REWARD RECEIPT STATUS  | TOTAL ITEMS PURCHASED
------------------------|----------------
+-----------------------|-----------------------
               ACCEPTED | 8184
               REJECTED | 1187
               
 > From the table above, ACCEPTED is greater when considering the number of items purchased from receipts.
 
-**Which brand has the most spend among users who were created within the past 6 months?**
+#### 3. Which brand has the most spend among users who were created within the past 6 months?
 
 
 BRAND NAME            | TOTAL BRAND SPEND
@@ -95,7 +95,7 @@ Cracker Barrel Cheese | 253.26
 > As seen from above, *Cracker Barrel Cheese* brand has the most spend among the users created within past 6 months.
 
 
-**Which brand has the most transactions among users who were created within the past 6 months?**
+#### 4. Which brand has the most transactions among users who were created within the past 6 months?
 
 BRAND NAME            | TOTAL TRANSACTIONS
 ----------------------|---------------------
