@@ -7,7 +7,7 @@ This project focuses on analyzing and structuring unstructured JSON data provide
  #### Data Sources
  
  - [Receipts](https://habeebanalytics.s3.eu-north-1.amazonaws.com/receipts.json.gz)
-     - S3 URI s3://habeebanalytics/receipts.json.gz
+     - S3 URI: s3://habeebanalytics/receipts.json.gz
  
  - [Brands](https://habeebanalytics.s3.eu-north-1.amazonaws.com/brands.json.gz)
      - S3 URI: s3://habeebanalytics/brands.json.gz
@@ -16,7 +16,7 @@ This project focuses on analyzing and structuring unstructured JSON data provide
      - S3 URI: s3://habeebanalytics/users.json.gz
 
 #### 2. SQL Query That Answers Four Predetermined Business Question
-    The four predetermined business questions are:
+ The four predetermined business questions are:
     - i. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
     - ii. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater? 
     - iii. Which brand has the most spend among users who were created within the past 6 months?
@@ -27,10 +27,10 @@ This project focuses on analyzing and structuring unstructured JSON data provide
    
 #### Analytical Tools Used
 
-- Cloud Data Warehouse: Snowflake
-- Cloud Object Storage: AWS S3 Bucket
-- Version Control: Git Bash
-- Repository: Github
+- **Cloud Data Warehouse: Snowflake**
+- **Cloud Object Storage: AWS S3 Bucket**
+- **Version Control: Git Bash**
+- **Repository: Github**
 
 ### Assumptions
 
@@ -92,7 +92,7 @@ ORDER BY
     "Average Spend" DESC;
 
 ```
-The result is 
+The result is: 
 
 REWARD RECEIPT STATUS  | AVERAGE SPEND
 -----------------------|-----------------------
@@ -122,7 +122,7 @@ GROUP BY
 ORDER BY 
     "Total Items Purchased" DESC;
 ```
-The result is
+The result is:
 
 REWARD RECEIPT STATUS  | TOTAL ITEMS PURCHASED
 -----------------------|-----------------------
@@ -202,7 +202,7 @@ FROM BrandTransactions
 ORDER BY TotalTransactions DESC
 LIMIT 1;
 ```
-The result is
+The result is:
 
 BRAND NAME            | TOTAL TRANSACTIONS
 ----------------------|---------------------
@@ -252,3 +252,47 @@ receipt_items:
 
 
 ## Stakeholder Communication
+
+**Subject:** Summary of Data Analytics Project and Next Steps
+
+Dear Stakeholders,
+
+I wanted to give you an update on the 'Fetch-Product-Data-Analytics-Engineering' project that we have been working on. Our goal has been to structure the unstructured JSON data we have received, to gain actionable insights and drive business decisions.
+
+**Project Breakdown**
+- I have analyzed data from three main sources: receipts, brands, and users, each with its distinct characteristics and opportunities for insights.
+- Our analytical efforts focused on answering four key business questions that ranged from spending patterns to user engagement with our brand partners.
+- I used Snowflake for warehousing, AWS S3 for storage, and Git for version control, ensuring a robust and scalable architecture.
+
+**Data Quality and Observations**
+Upon reviewing the data, I noticed a few areas of concern that need to be addressed to ensure the quality and reliability of our insights:
+- **Data Types**: There are discrepancies in date fields and mixed data types in what should be boolean columns.
+- **Missing Values**: We have identified significant gaps in the data, especially in `brandCode`, `categoryCode`, and user-related information.
+- **Duplication**: Some records in the `users` data appear more than once.
+- **Inconsistencies**: Item descriptions are not standardized, and there's mixed handling of missing data.
+
+**Questions and Information Needed**
+- **Data Collection Processes**: Could you provide more detail on how data is being collected and entered, especially for the `brands` and `users`?
+- **Data Entry Standards**: Are there set guidelines for how information should be entered, particularly for the item descriptions in receipts?
+-- **Data Source**: Could you please give me access to the data source to observe, assess and model our data after to easily answer some business questions
+**Resolving Data Quality Issues**
+- We need a clearer understanding of the business rules for data entry, especially for fields with observed inconsistencies.
+- Access to data logs or entry systems might help us trace back and understand the origin of these discrepancies.
+
+**Further Information for Optimization**
+- Understanding the expected data growth rate will help us scale our solutions appropriately.
+- Insights into the most frequently run queries or reports would be useful to optimize our indexing and query structures.
+
+**Performance and Scaling Concerns**
+- As data volumes grow, we'll need to monitor query performance and consider scaling up compute resources.
+- We might need to implement more sophisticated data transformation and loading strategies to handle increasing data variety and volume using data build tool (**dbt**).
+
+**Next Steps**
+- We propose a meeting to discuss the data quality concerns in detail and determine the best course of action.
+- Additionally, your input on the questions above would greatly assist us in refining our data strategy.
+
+Your insights are invaluable to this process, and I look forward to collaborating closely to ensure our data assets are optimized for the insights we need to drive Fetch Rewards forward.
+
+Best,
+
+[Habeeb Abdulrasaq](https://www.linkedin.com/in/habeebabdulrasaq)
