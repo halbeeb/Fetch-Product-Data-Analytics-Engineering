@@ -213,42 +213,40 @@ Tostitos              | 43
 
 ## Data Quality Evaluation
 
-#### Untidiness (Structural Issu
-
-es)
+#### Untidiness (Structural Issues)
 
 **receipts:**
-[x] Contains both receipt-level and item-level information in a single table, suggesting a need for normalization.
+- Contains both receipt-level and item-level information in a single table, suggesting a need for normalization.
 General:
-[x] No other immediate structural issues are apparent.
+- No other immediate structural issues are apparent.
 
 #### Messiness (Content Issues)
 
 **users:**
-[x] Incorrect data types for date columns (CREATEDDATE, LASTLOGIN).
+- Incorrect data types for date columns (CREATEDDATE, LASTLOGIN).
 
 **brands:**
-[x] TOPBRAND column uses object data type possibly due to missing values, which may complicate analysis involving this boolean-like variable.
+- TOPBRAND column uses object data type possibly due to missing values, which may complicate analysis involving this boolean-like variable.
 receipts:
-[x] Mixed data types for columns that appear to be boolean (NEEDSFETCHREVIEW, ITEM_USERFLAGGEDNEWITEM), and numeric columns used for identifiers are in decimals due to NaNs, suggesting messy data entry or processing.
+- Mixed data types for columns that appear to be boolean (NEEDSFETCHREVIEW, ITEM_USERFLAGGEDNEWITEM), and numeric columns used for identifiers are in decimals due to NaNs, suggesting messy data entry or processing.
 receipt_items:
-[x] Mixed types for columns that seem to represent boolean values (NEEDSFETCHREVIEW, USERFLAGGEDNEWITEM).
-[x] Inconsistent handling of missing data, with numerous missing values in user-flagged columns and BARCODE.
+- Mixed types for columns that seem to represent boolean values (NEEDSFETCHREVIEW, USERFLAGGEDNEWITEM).
+- Inconsistent handling of missing data, with numerous missing values in user-flagged columns and BARCODE.
 
 #### Completeness and Integrity
 
 **users:**
-[x] Missing values in STATE and LASTLOGIN.
-[x] Duplicate rows identified.
+- Missing values in STATE and LASTLOGIN.
+- Duplicate rows identified.
 
 **brands:**
-[x] Significant missing values in BRANDCODE, CATEGORY, CATEGORYCODE, and TOPBRAND.
+- Significant missing values in BRANDCODE, CATEGORY, CATEGORYCODE, and TOPBRAND.
 **receipts:**
-[x] Substantial missing values across various columns, particularly item-related ones.
+- Substantial missing values across various columns, particularly item-related ones.
 **receipt_items:**
-[x] Extensive missing data, particularly in BARCODE and user-flagged columns.
+- Extensive missing data, particularly in BARCODE and user-flagged columns.
 **brand_cpg_details:**
-[x] Appears complete with no missing values or duplicate rows.
+- Appears complete with no missing values or duplicate rows.
 
 
 ## Stakeholder Communication
