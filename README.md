@@ -6,21 +6,21 @@ This project focuses on analyzing and structuring unstructured JSON data provide
  
  #### Data Sources
  
- [Receipts](https://habeebanalytics.s3.eu-north-1.amazonaws.com/receipts.json.gz)
-  S3 URI s3://habeebanalytics/receipts.json.gz
+ - [Receipts](https://habeebanalytics.s3.eu-north-1.amazonaws.com/receipts.json.gz)
+     - S3 URI s3://habeebanalytics/receipts.json.gz
  
- [Brands](https://habeebanalytics.s3.eu-north-1.amazonaws.com/brands.json.gz)
-  S3 URI: s3://habeebanalytics/brands.json.gz
+ - [Brands](https://habeebanalytics.s3.eu-north-1.amazonaws.com/brands.json.gz)
+     - S3 URI: s3://habeebanalytics/brands.json.gz
  
- [Users](https://habeebanalytics.s3.eu-north-1.amazonaws.com/users.json.gz)
-  S3 URI: s3://habeebanalytics/users.json.gz
+ - [Users](https://habeebanalytics.s3.eu-north-1.amazonaws.com/users.json.gz)
+     - S3 URI: s3://habeebanalytics/users.json.gz
 
 #### 2. SQL Query That Answers Four Predetermined Business Question
     The four predetermined business questions are:
-    > i. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
-    ii. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater? 
-    iii. Which brand has the most spend among users who were created within the past 6 months?
-    iv. Which brand has the most transactions among users who were created within the past 6 months?
+    - i. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
+    - ii. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater? 
+    - iii. Which brand has the most spend among users who were created within the past 6 months?
+    - iv. Which brand has the most transactions among users who were created within the past 6 months?
    
 #### 3. Data Quality Evaluation
 #### 4. Stakeholder Communication
@@ -58,6 +58,7 @@ This project focuses on analyzing and structuring unstructured JSON data provide
    - Statuses `Flagged` and `Rejected` are considered `REJECTED`.
 9.  The data is presummed not to change at any time.
 
+This is full [Snowflake SQL Queries](https://github.com/halbeeb/Fetch-Product-Data-Analytics-Engineering/blob/main/--%20Fetch%20Product%20Data%20Analytics%20Engineer.sql).
 
 ## Review of Unstructured Data and Relational Data Modeling
 Given the receipts, brands and users data, and the receipts_items and brand cgp detail from receipts and brands respectively, below show the relational data modelling designed in the Snowflake cloud data warehouse and equally obtainable in other cloud data warehouse:
@@ -91,14 +92,14 @@ ORDER BY
     "Average Spend" DESC;
 
 ```
-
+The result is 
 
 REWARD RECEIPT STATUS  | AVERAGE SPEND
 -----------------------|-----------------------
 REJECTED | 85.10
 ACCEPTED | 80.85
 
-> It is evident as seen from the table that the rejected is greater than the Accepted on average.
+- It is evident as seen from the table that the rejected is greater than the Accepted on average.
 
 
 #### 2. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
@@ -121,13 +122,14 @@ GROUP BY
 ORDER BY 
     "Total Items Purchased" DESC;
 ```
+The result is
 
 REWARD RECEIPT STATUS  | TOTAL ITEMS PURCHASED
 -----------------------|-----------------------
 ACCEPTED | 8184
 REJECTED | 1187
               
-> From the table above, ACCEPTED is greater when considering the number of items purchased from receipts.
+- From the table above, ACCEPTED is greater when considering the number of items purchased from receipts.
 
 #### 3. Which brand has the most spend among users who were created within the past 6 months?
 
@@ -157,13 +159,13 @@ ORDER BY TotalBrandSpend DESC
 LIMIT 1;
 
 ```
-
+The result is:
 
 BRAND NAME            | TOTAL BRAND SPEND
 ----------------------|---------------------
 Cracker Barrel Cheese | 253.26
 
-> As seen from above, *Cracker Barrel Cheese* brand has the most spend among the users created within past 6 months.
+- As seen from above, *Cracker Barrel Cheese* brand has the most spend among the users created within past 6 months.
 
 
 #### 4. Which brand has the most transactions among users who were created within the past 6 months?
@@ -200,12 +202,13 @@ FROM BrandTransactions
 ORDER BY TotalTransactions DESC
 LIMIT 1;
 ```
+The result is
 
 BRAND NAME            | TOTAL TRANSACTIONS
 ----------------------|---------------------
 Tostitos              | 43
 
-> The brand with most transactions within past 6 months is **Tostitos**
+- The brand with most transactions within past 6 months is **Tostitos**
 
 
 ## Data Quality Evaluation
