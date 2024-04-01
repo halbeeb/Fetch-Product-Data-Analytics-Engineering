@@ -60,7 +60,7 @@ Given the receipts, brands and users data, and the receipts_items and brand cgp 
 
 #### Product.Fetch Relational Data Modeling/ Entity Relationship Diagram
 
-![ER Diagram.png](ER Diagram.png)
+![ER Diagram.png](https://github.com/halbeeb/Fetch-Product-Data-Analytics-Engineering/blob/main/ER%20Diagram.png)
 
 ## SQL Queries for Predetermined Business Question
 
@@ -70,8 +70,8 @@ given the relational above and the assumptions earlier stated, the four predeter
 
 REWARD RECEIPT STATUS  | AVERAGE SPEND
 -----------------------|-----------------------
-              REJECTED | 85.10
-              ACCEPTED | 80.85
+REJECTED | 85.10
+ACCEPTED | 80.85
 
 > It is evident as seen from the table that the rejected is greater than the Accepted on average.
 
@@ -80,8 +80,8 @@ REWARD RECEIPT STATUS  | AVERAGE SPEND
 
 REWARD RECEIPT STATUS  | TOTAL ITEMS PURCHASED
 -----------------------|-----------------------
-              ACCEPTED | 8184
-              REJECTED | 1187
+ACCEPTED | 8184
+REJECTED | 1187
               
 > From the table above, ACCEPTED is greater when considering the number of items purchased from receipts.
 
