@@ -5,11 +5,14 @@ This project focuses on analyzing and structuring unstructured JSON data provide
 #### 1. Review of Unstructured Data and Relational Data Modeling
  
  #### Data Sources
- > [Receipts](https://habeebanalytics.s3.eu-north-1.amazonaws.com/receipts.json.gz)
+ 
+ [Receipts](https://habeebanalytics.s3.eu-north-1.amazonaws.com/receipts.json.gz)
   S3 URI s3://habeebanalytics/receipts.json.gz
- > [Brands](https://habeebanalytics.s3.eu-north-1.amazonaws.com/brands.json.gz)
+ 
+ [Brands](https://habeebanalytics.s3.eu-north-1.amazonaws.com/brands.json.gz)
   S3 URI: s3://habeebanalytics/brands.json.gz
- > [Users](https://habeebanalytics.s3.eu-north-1.amazonaws.com/users.json.gz)
+ 
+ [Users](https://habeebanalytics.s3.eu-north-1.amazonaws.com/users.json.gz)
   S3 URI: s3://habeebanalytics/users.json.gz
 
 #### 2. SQL Query That Answers Four Predetermined Business Question
@@ -24,10 +27,10 @@ This project focuses on analyzing and structuring unstructured JSON data provide
    
 #### Analytical Tools Used
 
-##### Cloud Data Warehouse: Snowflake
-##### Cloud Object Storage: AWS S3 Bucket
-##### Version Control: Git Bash
-##### Repository: Github
+- Cloud Data Warehouse: Snowflake
+- Cloud Object Storage: AWS S3 Bucket
+- Version Control: Git Bash
+- Repository: Github
 
 ### Assumptions
 
@@ -55,6 +58,7 @@ This project focuses on analyzing and structuring unstructured JSON data provide
    - Statuses `Flagged` and `Rejected` are considered `REJECTED`.
 9.  The data is presummed not to change at any time.
 
+
 ## Review of Unstructured Data and Relational Data Modeling
 Given the receipts, brands and users data, and the receipts_items and brand cgp detail from receipts and brands respectively, below show the relational data modelling designed in the Snowflake cloud data warehouse and equally obtainable in other cloud data warehouse:
 
@@ -68,6 +72,27 @@ given the relational above and the assumptions earlier stated, the four predeter
 
 #### 1. When considering average spend from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 
+``` SQL
+SELECT 
+    CASE
+        WHEN REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED') THEN 'ACCEPTED'
+        WHEN REWARDSRECEIPTSTATUS IN ('REJECTED', 'FLAGGED') THEN 'REJECTED'
+        ELSE REWARDSRECEIPTSTATUS
+    END AS "Reward Receipt Status", 
+    ROUND(AVG(TOTALSPENT), 2) AS "Average Spend"
+FROM 
+    receipts
+WHERE 
+    REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED', 'REJECTED', 'FLAGGED')
+    AND TOTALSPENT IS NOT NULL
+GROUP BY 
+    "Reward Receipt Status"
+ORDER BY 
+    "Average Spend" DESC;
+
+```
+
+
 REWARD RECEIPT STATUS  | AVERAGE SPEND
 -----------------------|-----------------------
 REJECTED | 85.10
@@ -78,6 +103,25 @@ ACCEPTED | 80.85
 
 #### 2. When considering total number of items purchased from receipts with 'rewardsReceiptStatus’ of ‘Accepted’ or ‘Rejected’, which is greater?
 
+```sql
+SELECT 
+    CASE
+        WHEN REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED') THEN 'ACCEPTED'
+        WHEN REWARDSRECEIPTSTATUS IN ('REJECTED', 'FLAGGED') THEN 'REJECTED'
+        ELSE REWARDSRECEIPTSTATUS
+    END AS "Rewards Receipt Status", 
+    SUM(purchasedItemCount) AS "Total Items Purchased"
+FROM 
+    receipts
+WHERE 
+    REWARDSRECEIPTSTATUS IN ('FINISHED', 'SUBMITTED', 'REJECTED', 'FLAGGED')
+    AND purchasedItemCount IS NOT NULL
+GROUP BY 
+    "Rewards Receipt Status"
+ORDER BY 
+    "Total Items Purchased" DESC;
+```
+
 REWARD RECEIPT STATUS  | TOTAL ITEMS PURCHASED
 -----------------------|-----------------------
 ACCEPTED | 8184
@@ -86,6 +130,33 @@ REJECTED | 1187
 > From the table above, ACCEPTED is greater when considering the number of items purchased from receipts.
 
 #### 3. Which brand has the most spend among users who were created within the past 6 months?
+
+```sql
+WITH LatestUserDate AS (
+    SELECT MAX(CAST(createdDate AS DATE)) AS MaxCreateDate
+    FROM Users
+),
+RecentUsers AS (
+    SELECT _id
+    FROM Users
+    WHERE createdDate >= DATEADD(month, -6, (SELECT MaxCreateDate FROM LatestUserDate))
+),
+BrandSpend AS (
+    SELECT 
+        b.name AS BrandName,
+        SUM(ri.finalPrice) AS TotalBrandSpend
+    FROM Receipts r
+    JOIN RecentUsers ru ON ru._id = r.userId
+    JOIN Receipt_Items ri ON r._id = ri.receipt_Id
+    JOIN Brands b ON ri.barcode = b.barcode
+    GROUP BY b.name
+)
+SELECT BrandName as "Brand Name", TotalBrandSpend as "Total Brand Spend"
+FROM BrandSpend
+ORDER BY TotalBrandSpend DESC
+LIMIT 1;
+
+```
 
 
 BRAND NAME            | TOTAL BRAND SPEND
@@ -96,6 +167,39 @@ Cracker Barrel Cheese | 253.26
 
 
 #### 4. Which brand has the most transactions among users who were created within the past 6 months?
+``` SQL
+WITH LatestUserDate AS (
+    SELECT MAX(CAST(createdDate AS DATE)) AS MaxCreateDate
+    FROM Users
+),
+RecentUsers AS (
+    SELECT _id
+    FROM Users
+    WHERE CAST(createdDate AS DATE) >= DATEADD(month, -6, (SELECT MaxCreateDate FROM LatestUserDate))
+),
+UserTransactions AS (
+    SELECT 
+        r.userId, 
+        ri.barcode,
+        COUNT(r._id) AS Transactions
+    FROM Receipts r
+    JOIN Users ru ON r.userId = ru._id
+    JOIN Receipt_Items ri ON r._id = ri.receipt_Id
+    GROUP BY r.userId, ri.barcode
+),
+BrandTransactions AS (
+    SELECT 
+        b.name AS BrandName,
+        SUM(ut.Transactions) AS TotalTransactions
+    FROM UserTransactions ut
+    JOIN Brands b ON ut.barcode = b.barcode
+    GROUP BY b.name
+)
+SELECT BrandName as"Brand Name", TotalTransactions as "Total Transactions"
+FROM BrandTransactions
+ORDER BY TotalTransactions DESC
+LIMIT 1;
+```
 
 BRAND NAME            | TOTAL TRANSACTIONS
 ----------------------|---------------------
@@ -106,40 +210,42 @@ Tostitos              | 43
 
 ## Data Quality Evaluation
 
-#### Untidiness (Structural Issues)
+#### Untidiness (Structural Issu
+
+es)
 
 **receipts:**
-> Contains both receipt-level and item-level information in a single table, suggesting a need for normalization.
+[x] Contains both receipt-level and item-level information in a single table, suggesting a need for normalization.
 General:
-> No other immediate structural issues are apparent without more context on the data relationships. However, the potential overlap between brands and brand_cpg_details could be considered here once the relationship is clearer.
+[x] No other immediate structural issues are apparent.
 
 #### Messiness (Content Issues)
 
 **users:**
->Incorrect data types for date columns (CREATEDDATE, LASTLOGIN).
-brands:
->TOPBRAND column uses object data type possibly due to missing values, which may complicate analysis involving this boolean-like variable.
+[x] Incorrect data types for date columns (CREATEDDATE, LASTLOGIN).
+
+**brands:**
+[x] TOPBRAND column uses object data type possibly due to missing values, which may complicate analysis involving this boolean-like variable.
 receipts:
-> Mixed data types for columns that appear to be boolean (NEEDSFETCHREVIEW, ITEM_USERFLAGGEDNEWITEM), and numeric columns used for identifiers are in float64 due to NaNs, suggesting messy data entry or processing.
+[x] Mixed data types for columns that appear to be boolean (NEEDSFETCHREVIEW, ITEM_USERFLAGGEDNEWITEM), and numeric columns used for identifiers are in decimals due to NaNs, suggesting messy data entry or processing.
 receipt_items:
-> Mixed types for columns that seem to represent boolean values (NEEDSFETCHREVIEW, USERFLAGGEDNEWITEM).
-> Inconsistent handling of missing data, with numerous missing values in user-flagged columns and BARCODE.
+[x] Mixed types for columns that seem to represent boolean values (NEEDSFETCHREVIEW, USERFLAGGEDNEWITEM).
+[x] Inconsistent handling of missing data, with numerous missing values in user-flagged columns and BARCODE.
 
 #### Completeness and Integrity
 
 **users:**
-> Missing values in STATE and LASTLOGIN.
-> Duplicate rows identified.
+[x] Missing values in STATE and LASTLOGIN.
+[x] Duplicate rows identified.
 
 **brands:**
-> Significant missing values in BRANDCODE, CATEGORY, CATEGORYCODE, and TOPBRAND.
+[x] Significant missing values in BRANDCODE, CATEGORY, CATEGORYCODE, and TOPBRAND.
 **receipts:**
-> Substantial missing values across various columns, particularly item-related ones.
+[x] Substantial missing values across various columns, particularly item-related ones.
 **receipt_items:**
-> Extensive missing data, particularly in BARCODE and user-flagged columns, which may affect completeness and data quality.
+[x] Extensive missing data, particularly in BARCODE and user-flagged columns.
 **brand_cpg_details:**
->Appears complete with no missing values or duplicate rows, suggesting good integrity for this dataset. However, the relationship with brands needs to be checked for redundancy and consistency.
+[x] Appears complete with no missing values or duplicate rows.
 
-These categories highlight key areas for data cleaning and preparation. 
 
 ## Stakeholder Communication
